@@ -5,31 +5,42 @@ console.table(storedProductList);
 const displaySection = document.getElementById('cart__items');
 
 
-if (storedProductList == null) {
-  displaySection.innerHTML = "Votre panier est vide"
-} else {
+// async function pageFlow() {
+//   let promise = new Promise((resolve, reject) => {
+//     displayCart(() => resolve)
+//     console.log('displayCart ok');
+//   });
+//   let deleteArticle = await promise; // attendre que la promesse soit résolue (*)
+//   console.log('deleteArticle ok');
+// }
 
-  for (let i = 0; i < storedProductList.length; i++) { // itération des objets dans l'array obtenu
-    storedProduct = storedProductList[i];
-    console.log('storedProduct ' + i);
-    console.table(storedProduct);
+async function displayCart() {
+  if (storedProductList == null) {
+    displaySection.innerHTML = "Votre panier est vide";
+  } else {
 
-    let storedId = storedProduct.id;
-    let storedQty = storedProduct.qty;
-    let storedCol = storedProduct.col;
+    for (let i = 0; i < storedProductList.length; i++) { // itération des objets dans l'array obtenu
+      storedProduct = storedProductList[i];
+      console.log('storedProduct ' + i);
+      console.table(storedProduct);
 
-    product = `http://localhost:3000/api/products/${storedId}` // identification du produit itéré
+      let storedId = storedProduct.id;
+      let storedQty = storedProduct.qty;
+      let storedCol = storedProduct.col;
 
-    fetch(product)
-      .then((response) => response.json()
-        .then((data) => {
+      product = `http://localhost:3000/api/products/${storedId}`; // identification du produit itéré
 
-          displayArticle(storedId, storedCol, storedQty, data);
+      fetch(product)
+        .then((response) => response.json()
+          .then((data) => {
 
-        }))
-      .catch((error) => {
-        console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
-      });
+            displayArticle(storedId, storedCol, storedQty, data);
+
+          }))
+        .catch((error) => {
+          console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
+        });
+    }
   }
 }
 
@@ -104,9 +115,31 @@ function displayArticle(storedId, storedCol, storedQty, data) {
   deleteDiv.className = 'cart__item__content__settings__delete';
   let deleteEl = document.createElement('p');
   deleteDiv.appendChild(deleteEl);
-  deleteEl.className = 'deleteItem';
+  deleteEl.className = 'deleteItem'; // éléments selectionnés avec querySelectorAll
   deleteEl.innerHTML = 'Supprimer';
+
+  console.log(`item ${data.name} stored`);
 }
+
+// Supprimer un article
+let deleteArticle = () => {
+  let deleteBtn = document.querySelectorAll('.deleteItem');
+  console.log(`deleteBtn.length: ${deleteBtn.length}`); // renvoie 0
+
+  for (let j = 0; j < deleteBtn.length; j++) {
+    deleteBtn[j].addEventListener('click', deleteTarget());
+
+    function deleteTarget() {
+      let getItem = JSON.parse(localStorage.getItem('data'));
+      getItem.splice(j, 1);
+      localStorage.setItem('data', JSON.stringify(getItem));
+      location.reload();
+    }
+  }
+}
+
+displayCart()
+  .then(deleteArticle())
 
 // Vider le panier
 document.getElementById('delete-all').addEventListener('click', deleteAll)
