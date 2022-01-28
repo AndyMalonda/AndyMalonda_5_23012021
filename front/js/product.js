@@ -12,13 +12,11 @@ const quantity = document.getElementById('quantity');
 const addToCartBtn = document.getElementById('addToCart');
 
 let product = `http://localhost:3000/api/products/${id}` // identification du produit
-console.log('Produit identifié: ' + product);
 
 // Réupération data du produit
 fetch(product)
     .then((response) => response.json()
         .then((data) => {
-            console.log("Product fetched:");
             console.table(data);
             displayArticle(data); // appel display
         }))
@@ -48,7 +46,6 @@ class Product {
 
 // Gestion localStorage
 let data = localStorage.getItem("data"); // obtention de la data du localStorage actuel
-console.log(data);
 
 let productData = data ? JSON.parse(data) : [] // si data existante, création d'un nouvel array
 
@@ -59,13 +56,10 @@ function addNewProduct() {
 
         let productToStore = new Product(id, quantity.value, colorsSection.value); // création d'un nouvel objet Product
 
-        console.log('productToStore:');
         console.table(productToStore);
 
         let dataToCompare = JSON.parse(data); // on crée une copie du localStorage pour comparer les données
         console.log(`current data in localStorage:${dataToCompare}`);
-
-        // data.find(...)
 
         if (dataToCompare != null) { // si le localStorage est vide, on ajoute le produit sans vérification
 

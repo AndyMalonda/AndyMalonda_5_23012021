@@ -4,17 +4,13 @@ console.table(storedProductList);
 
 const displaySection = document.getElementById('cart__items');
 
+let deleteBtns = [];
+let articleCount = 0;
+let totalPrice = 0;
 
-// async function pageFlow() {
-//   let promise = new Promise((resolve, reject) => {
-//     displayCart(() => resolve)
-//     console.log('displayCart ok');
-//   });
-//   let deleteArticle = await promise; // attendre que la promesse soit résolue (*)
-//   console.log('deleteArticle ok');
-// }
 
-async function displayCart() {
+// affiche le panier
+function displayCart() {
   if (storedProductList == null) {
     displaySection.innerHTML = "Votre panier est vide";
   } else {
@@ -34,7 +30,7 @@ async function displayCart() {
         .then((response) => response.json()
           .then((data) => {
 
-            displayArticle(storedId, storedCol, storedQty, data);
+            displayArticle(storedId, storedCol, storedQty, data, storedProductList);
 
           }))
         .catch((error) => {
@@ -44,7 +40,8 @@ async function displayCart() {
   }
 }
 
-function displayArticle(storedId, storedCol, storedQty, data) {
+// affiche l'article
+function displayArticle(storedId, storedCol, storedQty, data, storedProductList) {
 
   // Attributs généraux
   let cartItem = document.createElement('article'); // création nouvel article
@@ -85,6 +82,7 @@ function displayArticle(storedId, storedCol, storedQty, data) {
   contentSubDiv.appendChild(priceEl);
   priceEl.innerHTML = data.price; // on va essayer de faire qqch avec le prix
 
+  getTotalPrice(data, storedQty);
 
   // Quantité
   let qtyDiv = document.createElement('div');
@@ -108,6 +106,7 @@ function displayArticle(storedId, storedCol, storedQty, data) {
   qtyInput.setAttribute('min', '1');
   qtyInput.setAttribute('max', '100');
   qtyInput.setAttribute('value', storedQty);
+  getArticleCount(storedQty);
 
   // Suppression
   let deleteDiv = document.createElement('div');
@@ -117,29 +116,39 @@ function displayArticle(storedId, storedCol, storedQty, data) {
   deleteDiv.appendChild(deleteEl);
   deleteEl.className = 'deleteItem'; // éléments selectionnés avec querySelectorAll
   deleteEl.innerHTML = 'Supprimer';
-
-  console.log(`item ${data.name} stored`);
+  // Attributions et appel de la fonction de suppression
+  deleteEl.addEventListener('click', deleteTarget);
+  deleteEl.setAttribute('data-productid', storedId);
+  deleteEl.setAttribute('data-productcolor', storedCol);
 }
 
 // Supprimer un article
-let deleteArticle = () => {
-  let deleteBtn = document.querySelectorAll('.deleteItem');
-  console.log(`deleteBtn.length: ${deleteBtn.length}`); // renvoie 0
 
-  for (let j = 0; j < deleteBtn.length; j++) {
-    deleteBtn[j].addEventListener('click', deleteTarget());
-
-    function deleteTarget() {
-      let getItem = JSON.parse(localStorage.getItem('data'));
-      getItem.splice(j, 1);
-      localStorage.setItem('data', JSON.stringify(getItem));
-      location.reload();
-    }
-  }
+function deleteTarget(e) {
+  let getItem = JSON.parse(localStorage.getItem('data'));
+  const indexOfExisting = getItem.findIndex(
+    (el) => el.id === e.target.dataset.productid && el.col == e.target.dataset.productcolor);
+  getItem.splice(indexOfExisting, 1);
+  localStorage.setItem('data', JSON.stringify(getItem));
+  e.path[4].remove(); // supprime le parent à l'index 4 de path: le <article> correspondant au produit
+  alert('Article supprimé');
 }
 
-displayCart()
-  .then(deleteArticle())
+// Total nombre d'aticles
+function getArticleCount(storedQty) {
+  articleCount += Number(storedQty);
+  let totalQtyEl = document.querySelector('#totalQuantity');
+  totalQtyEl.innerHTML = articleCount;
+}
+
+// Total prix
+function getTotalPrice(data, storedQty) {
+  let articlesPrice = data.price * storedQty;
+  totalPrice += articlesPrice;
+  let totalPriceEl = document.querySelector('#totalPrice');
+  totalPriceEl.innerHTML = totalPrice;
+}
+
 
 // Vider le panier
 document.getElementById('delete-all').addEventListener('click', deleteAll)
@@ -148,3 +157,5 @@ function deleteAll() {
   localStorage.clear();
   location.reload();
 }
+
+displayCart();
