@@ -2,8 +2,7 @@ let storedProductList = JSON.parse(localStorage.getItem('data')); // obtention d
 console.log('storedProductList:');
 console.table(storedProductList);
 
-const displaySection = document.getElementById('cart__items');
-
+let displaySection = document.getElementById('cart__items');
 let deleteBtns = [];
 let articleCount = 0;
 let totalPrice = 0;
@@ -30,8 +29,7 @@ function displayCart() {
         .then((response) => response.json()
           .then((data) => {
 
-            displayArticle(storedId, storedCol, storedQty, data, storedProductList);
-
+            displayArticle(storedId, storedCol, storedQty, data, i);
           }))
         .catch((error) => {
           console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
@@ -41,7 +39,7 @@ function displayCart() {
 }
 
 // affiche l'article
-function displayArticle(storedId, storedCol, storedQty, data, storedProductList) {
+function displayArticle(storedId, storedCol, storedQty, data, i) {
 
   // Attributs généraux
   let cartItem = document.createElement('article'); // création nouvel article
@@ -80,9 +78,9 @@ function displayArticle(storedId, storedCol, storedQty, data, storedProductList)
   // Prix de l'article
   let priceEl = document.createElement('p');
   contentSubDiv.appendChild(priceEl);
-  priceEl.innerHTML = data.price; // on va essayer de faire qqch avec le prix
+  priceEl.innerHTML = data.price;
 
-  getTotalPrice(data, storedQty);
+  // getTotalPrice(data, storedQty);
 
   // Quantité
   let qtyDiv = document.createElement('div');
@@ -106,7 +104,16 @@ function displayArticle(storedId, storedCol, storedQty, data, storedProductList)
   qtyInput.setAttribute('min', '1');
   qtyInput.setAttribute('max', '100');
   qtyInput.setAttribute('value', storedQty);
-  getArticleCount(storedQty);
+  // Indiquer le prix à l'arrivée sur la page
+  getTotalPriceOnLoad(data, storedQty)
+  // Modification quantité
+  qtyInput.addEventListener('change', (e) => {
+    let getItem = JSON.parse(localStorage.getItem('data'));
+    getItem[i].qty = e.target.value;
+    localStorage.setItem('data', JSON.stringify(getItem));
+    getTotalQty();
+    getTotalPrice(data)
+  });
 
   // Suppression
   let deleteDiv = document.createElement('div');
@@ -122,6 +129,38 @@ function displayArticle(storedId, storedCol, storedQty, data, storedProductList)
   deleteEl.setAttribute('data-productcolor', storedCol);
 }
 
+// Affichage de la quantité totale d'articles
+function getTotalQty() {
+  const array = JSON.parse(localStorage.getItem('data'));
+  let sumQty = 0;
+
+  for (let i = 0; i < array.length; i++) {
+    sumQty += Number(array[i].qty); // remplacer array par array[i] une fois le prix obtenu dans data
+  }
+  let totalQtyEl = document.querySelector('#totalQuantity');
+  totalQtyEl.innerHTML = sumQty;
+}
+
+// Total prix à l'arrivée sur la page
+function getTotalPriceOnLoad(data, storedQty) {
+  let articlesPrice = data.price * storedQty;
+  totalPrice += articlesPrice;
+  let totalPriceEl = document.querySelector('#totalPrice');
+  totalPriceEl.innerHTML = totalPrice;
+}
+
+// Total prix sur modfification de la quantité
+function getTotalPrice() {
+  const basket = JSON.parse(localStorage.getItem('data'));
+  let sumPrice = 0;
+
+  for (let j = 0; j < basket.length; j++) {
+    sumPrice += (Number(basket[j].qty)) * basket[j].price;
+  }
+  let totalpriceEl = document.querySelector('#totalPrice');
+  totalpriceEl.innerHTML = sumPrice;
+}
+
 // Supprimer un article
 
 function deleteTarget(e) {
@@ -132,23 +171,8 @@ function deleteTarget(e) {
   localStorage.setItem('data', JSON.stringify(getItem));
   e.path[4].remove(); // supprime le parent à l'index 4 de path: le <article> correspondant au produit
   alert('Article supprimé');
+  location.reload();
 }
-
-// Total nombre d'aticles
-function getArticleCount(storedQty) {
-  articleCount += Number(storedQty);
-  let totalQtyEl = document.querySelector('#totalQuantity');
-  totalQtyEl.innerHTML = articleCount;
-}
-
-// Total prix
-function getTotalPrice(data, storedQty) {
-  let articlesPrice = data.price * storedQty;
-  totalPrice += articlesPrice;
-  let totalPriceEl = document.querySelector('#totalPrice');
-  totalPriceEl.innerHTML = totalPrice;
-}
-
 
 // Vider le panier
 document.getElementById('delete-all').addEventListener('click', deleteAll)
@@ -158,4 +182,7 @@ function deleteAll() {
   location.reload();
 }
 
+
+// Page flow
 displayCart();
+getTotalQty();
