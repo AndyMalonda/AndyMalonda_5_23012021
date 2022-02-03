@@ -1,12 +1,10 @@
 let storedProductList = JSON.parse(localStorage.getItem('data')); // obtention des produits du localStorage
-console.log('storedProductList:');
 console.table(storedProductList);
 
 let displaySection = document.getElementById('cart__items');
 let deleteBtns = [];
 let articleCount = 0;
 let totalPrice = 0;
-
 
 // affiche le panier
 function displayCart() {
@@ -16,27 +14,25 @@ function displayCart() {
 
     for (let i = 0; i < storedProductList.length; i++) { // itération des objets dans l'array obtenu
       storedProduct = storedProductList[i];
-      console.log('storedProduct ' + i);
-      console.table(storedProduct);
 
       let storedId = storedProduct.id;
       let storedQty = storedProduct.qty;
       let storedCol = storedProduct.col;
 
-      product = `http://localhost:3000/api/products/${storedId}`; // identification du produit itéré
-
-      fetch(product)
-        .then((response) => response.json()
-          .then((data) => {
-
-            displayArticle(storedId, storedCol, storedQty, data, i);
-          }))
-        .catch((error) => {
-          console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
-        });
+      init(storedId, storedQty, storedCol, i);
     }
   }
 }
+
+async function init(storedId, storedQty, storedCol, i) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/products/${storedId}`);
+    const data = await response.json();
+    displayArticle(storedId, storedCol, storedQty, data, i);
+  } catch (error) {
+    return console.log(error);
+  };
+};
 
 // affiche l'article
 function displayArticle(storedId, storedCol, storedQty, data, i) {
@@ -80,8 +76,6 @@ function displayArticle(storedId, storedCol, storedQty, data, i) {
   contentSubDiv.appendChild(priceEl);
   priceEl.innerHTML = data.price;
 
-  // getTotalPrice(data, storedQty);
-
   // Quantité
   let qtyDiv = document.createElement('div');
   qtyDiv.className = 'cart__item__content__settings';
@@ -104,15 +98,17 @@ function displayArticle(storedId, storedCol, storedQty, data, i) {
   qtyInput.setAttribute('min', '1');
   qtyInput.setAttribute('max', '100');
   qtyInput.setAttribute('value', storedQty);
-  // Indiquer le prix à l'arrivée sur la page
+  // Indique le prix total à l'arrivée sur la page
   getTotalPriceOnLoad(data, storedQty)
   // Modification quantité
   qtyInput.addEventListener('change', (e) => {
     let getItem = JSON.parse(localStorage.getItem('data'));
     getItem[i].qty = e.target.value;
-    localStorage.setItem('data', JSON.stringify(getItem));
-    getTotalQty();
-    getTotalPrice(data)
+    localStorage.setItem('data', JSON.stringify(getItem)); // refresh quantité dans localStorage
+    storedProductList = JSON.parse(localStorage.getItem('data'));
+    console.table(storedProductList)
+    getTotalQty(); // affichage de la quantité totale
+    getTotalPrice(data); // affichage du prix total
   });
 
   // Suppression
@@ -123,6 +119,7 @@ function displayArticle(storedId, storedCol, storedQty, data, i) {
   deleteDiv.appendChild(deleteEl);
   deleteEl.className = 'deleteItem'; // éléments selectionnés avec querySelectorAll
   deleteEl.innerHTML = 'Supprimer';
+
   // Attributions et appel de la fonction de suppression
   deleteEl.addEventListener('click', deleteTarget);
   deleteEl.setAttribute('data-productid', storedId);
@@ -136,10 +133,10 @@ function getTotalQty() {
 
   for (let i = 0; i < array.length; i++) {
     sumQty += Number(array[i].qty); // remplacer array par array[i] une fois le prix obtenu dans data
-  }
+  };
   let totalQtyEl = document.querySelector('#totalQuantity');
   totalQtyEl.innerHTML = sumQty;
-}
+};
 
 // Total prix à l'arrivée sur la page
 function getTotalPriceOnLoad(data, storedQty) {
@@ -156,33 +153,155 @@ function getTotalPrice() {
 
   for (let j = 0; j < basket.length; j++) {
     sumPrice += (Number(basket[j].qty)) * basket[j].price;
-  }
+  };
   let totalpriceEl = document.querySelector('#totalPrice');
   totalpriceEl.innerHTML = sumPrice;
-}
+};
 
 // Supprimer un article
-
 function deleteTarget(e) {
   let getItem = JSON.parse(localStorage.getItem('data'));
-  const indexOfExisting = getItem.findIndex(
+  const indexOfExisting = getItem.findIndex( // recherche du produit correspondant dans le localStorage
     (el) => el.id === e.target.dataset.productid && el.col == e.target.dataset.productcolor);
   getItem.splice(indexOfExisting, 1);
   localStorage.setItem('data', JSON.stringify(getItem));
+  storedProductList = JSON.parse(localStorage.getItem('data'));
+  console.table(storedProductList);
   e.path[4].remove(); // supprime le parent à l'index 4 de path: le <article> correspondant au produit
   alert('Article supprimé');
-  location.reload();
+  getTotalPrice();
+  getTotalQty();
 }
 
 // Vider le panier
-document.getElementById('delete-all').addEventListener('click', deleteAll)
+document.getElementById('delete-all').addEventListener('click', deleteAll);
 
 function deleteAll() {
   localStorage.clear();
   location.reload();
-}
+};
 
+// Formulaire
+
+const form = document.querySelector('.cart__order__form');
+const genericRegex = /^[a-z ,.'-]+$/i;
+const addressRegex = /^[a-z 0-9 ,.'-]+$/i;
+const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+// Validation prénom
+form.firstName.addEventListener('change', checkFirstName);
+
+function checkFirstName() {
+  if (genericRegex.test(form.firstName.value)) {
+    document.querySelector('#firstNameErrorMsg').innerHTML = '';
+    return (true);
+  } else {
+    document.querySelector('#firstNameErrorMsg').innerHTML = 'Prénom incorrect, caractères acceptés: A-Z - , .';
+    return (false);
+  }
+};
+
+// Validation nom
+form.lastName.addEventListener('change', checkLastName);
+
+function checkLastName() {
+  if (genericRegex.test(form.lastName.value)) {
+    document.querySelector('#lastNameErrorMsg').innerHTML = '';
+    return (true);
+  } else {
+    document.querySelector('#lastNameErrorMsg').innerHTML = 'Nom incorrect, caractères acceptés: A-Z - , .';
+    return (false);
+  }
+};
+
+// Validation adresse
+form.address.addEventListener('change', checkAddress);
+
+function checkAddress() {
+  if (addressRegex.test(form.address.value)) {
+    document.querySelector('#addressErrorMsg').innerHTML = '';
+    return (true);
+  } else {
+    document.querySelector('#addressErrorMsg').innerHTML = 'Adresse incorrecte, certains caractères non acceptés';
+    return (false);
+  }
+};
+
+// Validation ville
+form.city.addEventListener('change', checkCity);
+
+function checkCity() {
+  if (genericRegex.test(form.city.value)) {
+    document.querySelector('#cityErrorMsg').innerHTML = '';
+    return (true);
+  } else {
+    document.querySelector('#cityErrorMsg').innerHTML = 'Ville incorrect, caractères acceptés: A-Z - , .';
+    return (false);
+  }
+};
+
+// Validation email
+form.email.addEventListener('change', checkEmail);
+
+function checkEmail() {
+  if (emailRegex.test(form.email.value)) {
+    document.querySelector('#emailErrorMsg').innerHTML = '';
+    return (true);
+  } else {
+    document.querySelector('#emailErrorMsg').innerHTML = 'Adresse email incorrecte'
+    return (false);
+  };
+};
+
+document.querySelector('.cart__order__form__submit').addEventListener('click', submitForm)
+
+function submitForm() {
+  if (checkFirstName() && checkLastName() && checkAddress() && checkCity() && checkEmail()) { // on vérifie que les champs sont tous renseignés
+
+    const contactData = {
+      'firstName': firstName,
+      'lastName': lastName,
+      'address': address,
+      'city': city,
+      'email': email
+    };
+    const productIds = [];
+
+    for (let k = 0; k < storedProductList.length; k++) {
+      productIds.push(storedProductList[k].id);
+    };
+    const order = {
+      'contact': contactData,
+      'products': productIds
+    };
+    asyncPostCall(order)
+  } else {
+    alert('Champs manquants ou incorrects');
+  };
+};
+
+// fonction POST
+async function asyncPostCall(order) {
+  try {
+    const response = await fetch('http://localhost:3000/api/products/order', { // on fetch l'url
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(order) // on attribue les données de produit et de contact au contenu
+    });
+    const data = await response.json();
+    localStorage.clear(); // on efface l'ancien localStorage
+    localStorage.setItem("orderId", data.orderId); // on génère le n° de commande
+    document.location.href = "confirmation.html"; // on va à la page confirmation
+  } catch (error) {
+    console.log(error);
+  };
+};
 
 // Page flow
 displayCart();
-getTotalQty();
+
+if (storedProductList != null) {
+  getTotalQty();
+};

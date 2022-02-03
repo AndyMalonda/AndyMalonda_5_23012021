@@ -1,17 +1,13 @@
-const products = "http://localhost:3000/api/products";
-
-let displaySection = document.getElementById("items")
-
 // Fetching des différents objets de l'API
-fetch(products)
-    .then((response) => response.json()
-        .then((data) => {
-            console.table(data);
-            displayData(data);
-        }))
-    .catch((error) => {
-        console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
-    });
+async function init() {
+    try {
+        const response = await fetch('http://localhost:3000/api/products');
+        const data = await response.json();
+        displayData(data);
+    } catch (error) {
+        return console.log(error);
+    }
+};
 
 // Affichage des produits
 function displayData(data) {
@@ -27,5 +23,7 @@ function displayData(data) {
     </a>
     `;
     }
-    displaySection.innerHTML = content;
-}
+    document.getElementById('items').innerHTML = content;
+};
+
+init();

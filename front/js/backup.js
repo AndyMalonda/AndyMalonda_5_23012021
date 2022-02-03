@@ -111,3 +111,16 @@ content +=
     </article>
     `
 displaySection.innerHTML += content;
+
+
+productUrl = `http://localhost:3000/api/products/${storedId}`; // identification du produit itéré
+
+// fetch(product)
+//   .then((response) => response.json()
+//     .then((data) => {
+
+//       displayArticle(storedId, storedCol, storedQty, data, i);
+//     }))
+//   .catch((error) => {
+//     console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
+//   });
