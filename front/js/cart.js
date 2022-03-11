@@ -3,6 +3,7 @@ console.table(storedProductList);
 
 let displaySection = document.getElementById("cart__items");
 let deleteBtns = [];
+let productPrice = 0;
 let articleCount = 0;
 let totalPrice = 0;
 
@@ -31,6 +32,7 @@ async function init(storedId, storedQty, storedCol, i) {
     );
     const data = await response.json();
     displayArticle(storedId, storedCol, storedQty, data, i);
+    productPrice = data.price;
   } catch (error) {
     return console.log(error);
   }
@@ -139,7 +141,7 @@ function getTotalQty() {
 
 // Total prix à l'arrivée sur la page
 function getTotalPriceOnLoad(data, storedQty) {
-  let articlesPrice = data.price * storedQty;
+  let articlesPrice = productPrice * storedQty;
   totalPrice += articlesPrice;
   let totalPriceEl = document.querySelector("#totalPrice");
   totalPriceEl.innerHTML = totalPrice;
@@ -151,10 +153,26 @@ function getTotalPrice() {
   let sumPrice = 0;
 
   for (let j = 0; j < basket.length; j++) {
-    sumPrice += Number(basket[j].qty) * basket[j].price;
+    let id = basket[j].id;
+    fetchPrice(id);
+    console.log("ProductPrice in func" + productPrice);
+
+    sumPrice += Number(basket[j].qty) * productPrice;
   }
   let totalpriceEl = document.querySelector("#totalPrice");
   totalpriceEl.innerHTML = sumPrice;
+}
+
+// Obtenir prix d'un article
+async function fetchPrice(id) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/products/${id}`);
+    const productFetched = await response.json();
+    productPrice = productFetched.price;
+    console.log("ProductPrice in fetch" + productPrice);
+  } catch (error) {
+    return console.log(error);
+  }
 }
 
 // Supprimer un article

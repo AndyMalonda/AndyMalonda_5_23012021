@@ -51,7 +51,6 @@ addToCartBtn.addEventListener("click", () => {
       id: id,
       qty: quantity.value,
       col: colorsSection.value,
-      price: product.price,
     };
 
     let getData = JSON.parse(data);
